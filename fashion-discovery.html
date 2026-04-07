@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fashion Discovery</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #f5f4f0; color: #1a1a1a; min-height: 100vh; }
+.app { max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
+h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #666; margin-bottom: 1.5rem; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 0.5px solid #ddd; }
+.tab { padding: 8px 18px; font-size: 14px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; transition: all 0.15s; }
+.tab.active { color: #1a1a1a; border-bottom: 2px solid #1a1a1a; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.card-title { font-size: 13px; font-weight: 500; color: #888; margin-bottom: 12px; letter-spacing: 0.03em; }
+.tag-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { font-size: 13px; padding: 5px 14px; border-radius: 20px; cursor: pointer; border: 0.5px solid #ddd; color: #666; background: #fff; transition: all 0.15s; }
+.tag:hover { border-color: #999; color: #333; }
+.tag.selected { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
+input[type=text], input[type=email], select, textarea {
+  width: 100%; padding: 8px 12px; font-size: 14px; border: 0.5px solid #ddd; border-radius: 8px;
+  background: #fff; color: #1a1a1a; outline: none; font-family: inherit;
+}
+input:focus, select:focus { border-color: #999; }
+.input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.input-row input { flex: 1; }
+.add-btn { padding: 0 16px; font-size: 13px; cursor: pointer; background: none; border: 0.5px solid #ddd; border-radius: 8px; color: #666; white-space: nowrap; height: 36px; }
+.add-btn:hover { background: #f5f4f0; }
+.item-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.item-chip { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f5f4f0; border-radius: 8px; font-size: 13px; }
+.remove-btn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 18px; padding: 0 0 0 8px; line-height: 1; }
+.remove-btn:hover { color: #666; }
+.size-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.size-row { display: flex; align-items: center; gap: 8px; }
+.size-label { font-size: 13px; color: #888; width: 70px; flex-shrink: 0; }
+.size-row select { flex: 1; font-size: 13px; }
+.profile-import {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1.5px dashed #ccc; border-radius: 12px; padding: 2rem; gap: 8px;
+  cursor: pointer; color: #888; font-size: 14px; margin-bottom: 1rem;
+  transition: background 0.15s;
+}
+.profile-import:hover { background: #efefeb; }
+.save-bar { display: flex; justify-content: flex-end; margin-top: 1rem; gap: 8px; }
+.primary-btn { font-size: 14px; padding: 9px 24px; border-radius: 8px; cursor: pointer; background: #1a1a1a; color: #fff; border: none; font-family: inherit; }
+.primary-btn:hover { background: #333; }
+.primary-btn:disabled { background: #ccc; cursor: not-allowed; }
+.section-sub { font-size: 13px; color: #888; margin-bottom: 1rem; line-height: 1.6; }
+.discover-card { background: #fff; border: 0.5px solid #e0dfd8; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.brand-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.brand-name { font-size: 16px; font-weight: 500; }
+.brand-origin { font-size: 12px; color: #888; margin-top: 2px; }
+.match-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #eaf3de; color: #3b6d11; white-space: nowrap; flex-shrink: 0; }
+.brand-desc { font-size: 13px; color: #555; line-height: 1.65; margin-bottom: 10px; }
+.brand-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.brand-tag { font-size: 11px; padding: 3px 9px; border-radius: 20px; background: #f5f4f0; color: #666; }
+.action-row { display: flex; gap: 8px; }
+.action-btn { font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer; border: 0.5px solid #ddd; background: none; color: #555; font-family: inherit; }
+.action-btn:hover { background: #f5f4f0; }
+.action-btn.saved { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.discover-empty { text-align: center; padding: 3rem 1rem; color: #aaa; font-size: 14px; }
+.filter-row { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+.filter-chip { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid #ddd; cursor: pointer; color: #888; background: none; font-family: inherit; }
+.filter-chip.active { border-color: #1a1a1a; color: #1a1a1a; background: #f5f4f0; }
+.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 100; white-space: nowrap; }
+.toast.show { opacity: 1; }
+.closet-item-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+@media (max-width: 480px) { .closet-item-form { grid-template-columns: 1fr; } .size-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Fashion Discovery</h1>
+  <p class="subtitle">あなたのスタイルをもとに、まだ知らないブランドと出会う</p>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('profile')">プロフィール</button>
+    <button class="tab" onclick="switchTab('closet')">クローゼット</button>
+    <button class="tab" onclick="switchTab('discover')">発見する</button>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div id="tab-profile" class="section active">
+    <label class="profile-import">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span style="font-weight:500;">プロフィールをJSONでインポート</span>
+      <span style="font-size:12px;">以前に保存したfashion-profile.jsonを読み込めます</span>
+      <input type="file" accept=".json" style="display:none" onchange="importProfile(this)">
+    </label>
+
+    <div class="card">
+      <div class="card-title">好きなスタイル（複数選択可）</div>
+      <div class="tag-grid" id="style-tags">
+        <button class="tag" onclick="toggleTag(this,'styles')">ミニマル</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">モード</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">ストリート</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">クラシック</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">Y2K</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">アウトドア</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">ワーク</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">ヴィンテージ</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">アバンギャルド</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">スポーティ</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">ノームコア</button>
+        <button class="tag" onclick="toggleTag(this,'styles')">テーラード</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">好きなブランド</div>
+      <div class="input-row">
+        <input type="text" id="brand-input" placeholder="例: ACNE STUDIOS、COS、COMOLI" onkeydown="if(event.key==='Enter')addItem('brands')">
+        <button class="add-btn" onclick="addItem('brands')">追加</button>
+      </div>
+      <div class="item-list" id="brands-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">予算感（1アイテムあたり）</div>
+      <div class="tag-grid" id="budget-tags">
+        <button class="tag" onclick="selectBudget(this)">〜5,000円</button>
+        <button class="tag" onclick="selectBudget(this)">5,000〜20,000円</button>
+        <button class="tag" onclick="selectBudget(this)">20,000〜50,000円</button>
+        <button class="tag" onclick="selectBudget(this)">50,000円〜</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">サイズ</div>
+      <div class="size-grid">
+        <div class="size-row"><span class="size-label">トップス</span>
+          <select id="size-tops"><option value="">-</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+        <div class="size-row"><span class="size-label">ボトムス</span>
+          <select id="size-bottoms"><option value="">-</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+        <div class="size-row"><span class="size-label">アウター</span>
+          <select id="size-outer"><option value="">-</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select></div>
+        <div class="size-row"><span class="size-label">シューズ</span>
+          <select id="size-shoes"><option value="">-</option>
+            <option>22</option><option>22.5</option><option>23</option><option>23.5</option>
+            <option>24</option><option>24.5</option><option>25</option><option>25.5</option>
+            <option>26</option><option>26.5</option><option>27</option><option>27.5</option><option>28</option>
+          </select></div>
+        <div class="size-row"><span class="size-label">パンツ(cm)</span>
+          <input type="text" id="size-waist" placeholder="例: W30、76cm"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">性別・体型</div>
+      <div class="tag-grid" id="gender-tags">
+        <button class="tag" onclick="toggleTag(this,'gender')">メンズ</button>
+        <button class="tag" onclick="toggleTag(this,'gender')">ウィメンズ</button>
+        <button class="tag" onclick="toggleTag(this,'gender')">ユニセックス</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">避けたいもの・苦手なもの</div>
+      <div class="input-row">
+        <input type="text" id="avoids-input" placeholder="例: 派手な柄、合皮素材、ロゴが目立つもの" onkeydown="if(event.key==='Enter')addItem('avoids')">
+        <button class="add-btn" onclick="addItem('avoids')">追加</button>
+      </div>
+      <div class="item-list" id="avoids-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">自由メモ（好みの詳細など）</div>
+      <textarea id="profile-memo" rows="3" placeholder="例: 素材感を大切にしている。ゆったりシルエットが好き。日常使いできるものを求めている。" style="resize:vertical;"></textarea>
+    </div>
+
+    <div class="save-bar">
+      <button class="primary-btn" onclick="saveProfile()">プロフィールをJSONで保存 ↓</button>
+    </div>
+  </div>
+
+  <!-- CLOSET TAB -->
+  <div id="tab-closet" class="section">
+    <p class="section-sub">持っているアイテムを記録しておくと、AIがより精度高くブランドを提案します。</p>
+
+    <div class="card">
+      <div class="card-title">アイテムを追加</div>
+      <div class="closet-item-form">
+        <input type="text" id="item-name" placeholder="アイテム名 例: オーバーコート">
+        <input type="text" id="item-brand" placeholder="ブランド名">
+        <select id="item-category">
+          <option value="">カテゴリ</option>
+          <option>トップス</option><option>アウター</option><option>ボトムス</option>
+          <option>ワンピース/スカート</option><option>シューズ</option><option>バッグ</option><option>アクセサリー</option>
+        </select>
+        <select id="item-color">
+          <option value="">カラー</option>
+          <option>ブラック</option><option>ホワイト</option><option>グレー</option><option>ネイビー</option>
+          <option>ベージュ</option><option>ブラウン</option><option>カーキ</option><option>ブルー</option>
+          <option>レッド</option><option>グリーン</option><option>その他</option>
+        </select>
+        <input type="text" id="item-size" placeholder="サイズ 例: M、38">
+        <input type="text" id="item-year" placeholder="購入年 例: 2023">
+      </div>
+      <button class="primary-btn" style="width:100%;" onclick="addClosetItem()">追加する</button>
+    </div>
+
+    <div id="closet-list"></div>
+  </div>
+
+  <!-- DISCOVER TAB -->
+  <div id="tab-discover" class="section">
+    <p class="section-sub">プロフィールとクローゼットをもとに、まだ出会っていないブランドをAIが提案します。</p>
+    <div class="filter-row">
+      <button class="filter-chip active" onclick="setFilter('all',this)">すべて</button>
+      <button class="filter-chip" onclick="setFilter('saved',this)">保存済み</button>
+    </div>
+    <button class="primary-btn" id="discover-btn" style="width:100%; margin-bottom:1rem; padding:12px;" onclick="discoverBrands()">AIでブランドを発見する</button>
+    <div id="discover-results">
+      <div class="discover-empty">プロフィールを入力して「AIでブランドを発見する」を押してください。</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const state = {
+  styles: [], gender: [], budget: null, brands: [], avoids: [],
+  sizes: {}, closet: [], saved: [], discovered: [], memo: ''
+};
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['profile','closet','discover'][i] === name);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function toggleTag(el, field) {
+  el.classList.toggle('selected');
+  const val = el.textContent;
+  const arr = state[field];
+  if (!Array.isArray(arr)) { state[field] = []; }
+  const idx = state[field].indexOf(val);
+  if (idx >= 0) state[field].splice(idx, 1); else state[field].push(val);
+}
+
+function selectBudget(el) {
+  document.querySelectorAll('#budget-tags .tag').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  state.budget = el.textContent;
+}
+
+function addItem(field) {
+  const inputId = field.replace('s','') + '-input';
+  const input = document.getElementById(inputId) || document.getElementById(field + '-input') || document.getElementById(field.slice(0,-1) + '-input');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  state[field].push(val);
+  renderList(field);
+  input.value = '';
+}
+
+function renderList(field) {
+  const el = document.getElementById(field + '-list');
+  if (!el) return;
+  el.innerHTML = state[field].map((v, i) => `
+    <div class="item-chip">
+      <span>${v}</span>
+      <button class="remove-btn" onclick="removeItem('${field}',${i})">×</button>
+    </div>`).join('');
+}
+
+function removeItem(field, idx) {
+  state[field].splice(idx, 1);
+  renderList(field);
+}
+
+function addClosetItem() {
+  const name = document.getElementById('item-name').value.trim();
+  if (!name) return;
+  state.closet.push({
+    name,
+    brand: document.getElementById('item-brand').value.trim(),
+    category: document.getElementById('item-category').value,
+    color: document.getElementById('item-color').value,
+    size: document.getElementById('item-size').value.trim(),
+    year: document.getElementById('item-year').value.trim(),
+    id: Date.now()
+  });
+  renderCloset();
+  ['item-name','item-brand','item-size','item-year'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('item-category').value = '';
+  document.getElementById('item-color').value = '';
+}
+
+function renderCloset() {
+  const el = document.getElementById('closet-list');
+  if (!state.closet.length) {
+    el.innerHTML = '<div class="discover-empty">まだアイテムがありません</div>';
+    return;
+  }
+  const groups = {};
+  state.closet.forEach(item => {
+    const g = item.category || 'その他';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(item);
+  });
+  el.innerHTML = Object.entries(groups).map(([cat, items]) => `
+    <div class="card">
+      <div class="card-title">${cat} (${items.length}点)</div>
+      <div class="item-list">
+        ${items.map(item => `
+          <div class="item-chip">
+            <span>${item.name}${item.brand ? ' — ' + item.brand : ''}${item.color ? ' / ' + item.color : ''}${item.size ? ' (' + item.size + ')' : ''}</span>
+            <button class="remove-btn" onclick="removeClosetItem(${item.id})">×</button>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function removeClosetItem(id) {
+  state.closet = state.closet.filter(i => i.id !== id);
+  renderCloset();
+}
+
+function setFilter(f, el) {
+  state.filter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderDiscover();
+}
+
+function renderDiscover() {
+  const el = document.getElementById('discover-results');
+  const items = state.filter === 'saved'
+    ? state.discovered.filter(b => state.saved.includes(b.name))
+    : state.discovered;
+  if (!items.length) {
+    el.innerHTML = state.filter === 'saved'
+      ? '<div class="discover-empty">保存したブランドはまだありません</div>'
+      : '<div class="discover-empty">プロフィールを入力して「AIでブランドを発見する」を押してください。</div>';
+    return;
+  }
+  el.innerHTML = items.map(b => `
+    <div class="discover-card">
+      <div class="brand-header">
+        <div>
+          <div class="brand-name">${b.name}</div>
+          <div class="brand-origin">${b.origin || ''}</div>
+        </div>
+        <span class="match-badge">${b.match}% マッチ</span>
+      </div>
+      <div class="brand-desc">${b.description}</div>
+      <div class="brand-tags">${(b.tags||[]).map(t => `<span class="brand-tag">${t}</span>`).join('')}</div>
+      ${b.priceRange ? `<div style="font-size:12px;color:#888;margin-bottom:10px;">価格帯: ${b.priceRange}</div>` : ''}
+      <div class="action-row">
+        <button class="action-btn ${state.saved.includes(b.name)?'saved':''}" onclick="toggleSave('${b.name}',this)">
+          ${state.saved.includes(b.name) ? '保存済み' : '保存する'}
+        </button>
+        <button class="action-btn" onclick="openSearch('${b.name}')">ブランドを検索 →</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleSave(name, btn) {
+  const idx = state.saved.indexOf(name);
+  if (idx >= 0) { state.saved.splice(idx, 1); btn.textContent = '保存する'; btn.classList.remove('saved'); }
+  else { state.saved.push(name); btn.textContent = '保存済み'; btn.classList.add('saved'); }
+}
+
+function openSearch(name) {
+  window.open('https://www.google.com/search?q=' + encodeURIComponent(name + ' ファッションブランド'), '_blank');
+}
+
+async function discoverBrands() {
+  const btn = document.getElementById('discover-btn');
+  btn.textContent = '提案を生成中...';
+  btn.disabled = true;
+
+  state.sizes = {
+    tops: document.getElementById('size-tops').value,
+    bottoms: document.getElementById('size-bottoms').value,
+    outer: document.getElementById('size-outer').value,
+    shoes: document.getElementById('size-shoes').value,
+    waist: document.getElementById('size-waist').value
+  };
+  state.memo = document.getElementById('profile-memo').value;
+
+  const profileSummary = {
+    styles: state.styles,
+    gender: state.gender,
+    budget: state.budget,
+    likedBrands: state.brands,
+    avoids: state.avoids,
+    sizes: state.sizes,
+    memo: state.memo,
+    closetSample: state.closet.slice(0, 20).map(i => ({ name: i.name, brand: i.brand, category: i.category, color: i.color }))
+  };
+
+  const prompt = `あなたはファッションのプロフェッショナルです。以下のユーザープロフィールをもとに、ユーザーがまだ知らなさそうな・出会っていなさそうな洋服ブランドを6つ提案してください。
+
+ユーザープロフィール:
+${JSON.stringify(profileSummary, null, 2)}
+
+条件:
+- ユーザーがすでに知っている可能性の高い有名ブランドは避ける
+- ユーザーの好みのスタイルや予算感に合ったブランドを選ぶ
+- 日本国内で入手しやすいブランドを優先（オンライン購入可能なものを含む）
+- なぜそのユーザーにおすすめかを具体的に説明する
+
+以下のJSON形式のみで回答すること（マークダウン記法・コードブロック不要、純粋なJSONのみ）:
+{"brands":[{"name":"ブランド名","origin":"発祥国・都市","match":85,"description":"このユーザーになぜおすすめかを含む2〜3文の日本語説明","tags":["タグ1","タグ2","タグ3"],"priceRange":"¥¥〜¥¥¥"}]}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c => c.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    state.discovered = parsed.brands || [];
+    renderDiscover();
+    showToast(state.discovered.length + '件のブランドを提案しました');
+  } catch (e) {
+    document.getElementById('discover-results').innerHTML =
+      '<div class="discover-empty">エラーが発生しました。もう一度お試しください。</div>';
+    console.error(e);
+  }
+
+  btn.textContent = 'AIでブランドを発見する';
+  btn.disabled = false;
+}
+
+function saveProfile() {
+  state.sizes = {
+    tops: document.getElementById('size-tops').value,
+    bottoms: document.getElementById('size-bottoms').value,
+    outer: document.getElementById('size-outer').value,
+    shoes: document.getElementById('size-shoes').value,
+    waist: document.getElementById('size-waist').value
+  };
+  state.memo = document.getElementById('profile-memo').value;
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fashion-profile.json';
+  a.click();
+  showToast('プロフィールを保存しました');
+}
+
+function importProfile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.assign(state, data);
+      applyProfileToUI();
+      showToast('プロフィールを読み込みました');
+    } catch {
+      showToast('読み込みエラー: JSONが正しくありません');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function applyProfileToUI() {
+  document.querySelectorAll('#style-tags .tag').forEach(t => {
+    t.classList.toggle('selected', (state.styles || []).includes(t.textContent));
+  });
+  document.querySelectorAll('#gender-tags .tag').forEach(t => {
+    t.classList.toggle('selected', (state.gender || []).includes(t.textContent));
+  });
+  document.querySelectorAll('#budget-tags .tag').forEach(t => {
+    t.classList.toggle('selected', t.textContent === state.budget);
+  });
+  renderList('brands');
+  renderList('avoids');
+  if (state.sizes) {
+    const map = { tops: 'size-tops', bottoms: 'size-bottoms', outer: 'size-outer', shoes: 'size-shoes', waist: 'size-waist' };
+    Object.entries(map).forEach(([k, id]) => {
+      const el = document.getElementById(id);
+      if (el && state.sizes[k]) el.value = state.sizes[k];
+    });
+  }
+  if (state.memo) document.getElementById('profile-memo').value = state.memo;
+  renderCloset();
+  if (state.discovered && state.discovered.length) renderDiscover();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+renderCloset();
+</script>
+</body>
+</html>
